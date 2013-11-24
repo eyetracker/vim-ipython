@@ -7,7 +7,7 @@ A two-way integration between Vim and IPython 0.11+
 * author: Paul Ivanov (http://pirsquared.org)
 * github: http://github.com/ivanov/vim-ipython
 * demos: http://pirsquared.org/vim-ipython/
-* blogpost: http://pirsquared.org/blog/2011/07/28/vim-ipython/
+* blogpost: http://pirsquared.org/blog/vim-ipython.html
 
 Using this plugin, you can send lines or whole files for IPython to
 execute, and also get back object introspection and word completions in
@@ -76,7 +76,9 @@ Now type out a line and send it to IPython using ``<Ctrl-S>`` from Command mode:
   import os
 
 You should see a notification message confirming the line was sent, along
-with the input number for the line, like so ``In[1]: import os``.
+with the input number for the line, like so ``In[1]: import os``. If
+``<Ctrl-S>`` did **not** work, see the `Known Issues <#known-issues>`_ for a
+work-around.
 
 ``<Ctrl-S>`` also works from insert mode, but doesn't show notification,
 unless ``monitor_subchannel`` is set to ``True`` (see `vim-ipython 'shell'`_,
@@ -164,11 +166,48 @@ the line ``let g:ipy_completefunc = 'local'`` in one's vimrc will activate the
 IPython-based completion only for current buffer. Setting `g:ipy_completefunc`
 to anything other than `'local'` or `'global'` disables it altogether.
 
+**NEW since IPython 0.13**
+
+**Sending ? and ?? now works just like IPython**
+This is only supported for single lines that end with ? and ??, which works
+just the same as it does in IPython (The ?? variant will show the code, not
+just the docstring
+
+**Sending arbitrary signal to IPython kernel**
+`:IPythonInterrupt` now supports sending of arbitrary signals. There's a
+convenience alias for sending SIGTERM via `:IPythonTerminate`, but you can
+also send any signal by just passing an argument to `:IPythonInterrupt`.
+Here's an example. First, send this code (or just run it in your kernel)::
+
+    import signal
+    def greeting_user(signum, stack):
+        import sys
+        sys.stdout.flush()
+        print "Hello, USER!"
+        sys.stdout.flush()
+    signal.signal(signal.SIGUSR1, greeting_user)
+
+Now, proceed to connect up using vim-ipython and run `:IPythonInterrupt 10` -
+where 10 happens to be signal.SIGUSR1 in the POSIX world. This functionality,
+along with the sourcing of profile-dependent code on startup (
+``vi `ipython locate profile default`/startup/README`` ), brings the forgotten
+world of inter-process communication through signals to your favorite text
+editor and REPL combination.
+
+
 ---------------
-Current issues:
+Known issues:
 ---------------
 - For now, vim-ipython only connects to an ipython session in progress.
-- The ipdb integration is not yet re-implemented.
+- The standard ipython clients (console, qtconsole, notebook) do not currently
+  display the result of computation which they did not initialize. This means
+  that if you send print statements for execution from within vim, they will
+  only be shown inside the vim-ipython shell buffer, but **not** within any of
+  the standard clients. This is not a limitation of vim-ipython, but a
+  limitation of those built-in clients, see `ipython/ipython#1873
+  <https://github.com/ipython/ipython/issues/1873>`_
+- The ipdb integration is not yet re-implemented. Pending 
+  [IPython PR #3089](https://github.com/ipython/ipython/pull/3089)
 - If you're running inside ``screen``, read about the ``<CTRL-S>`` issue `here
   <http://munkymorgy.blogspot.com/2008/07/screen-ctrl-s-bug.html>`_, and add
   this line to your ``.bashrc`` to fix it::
@@ -210,6 +249,8 @@ Current issues:
   highlighting, but that syntax highlighting will be broken if a stack trace
   is returned which contains one half of a quote delimiter.
 
+- vim-ipython is currently for Python2.X only.
+
 ----------------------------
 Thanks and Bug Participation
 ----------------------------
@@ -242,6 +283,7 @@ pull request with your attribution.
 * @pielgrzym for setting completefunc locally to a buffer (#32)
 * @flacjacket for pointing out and providing fix for IPython API change
 * @memeplex for fixing the identifier grabbing on e.g. non-PEP8 compliant code
+* @pydave for IPythonTerminate (sending SIGTERM using our hack)
 
 Similar Projects
 ----------------
